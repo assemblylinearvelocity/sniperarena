@@ -8,14 +8,6 @@ local tracked = {}
 local ENEMY_COLOR    = Color3.fromRGB(255, 60, 60)
 local FRIENDLY_COLOR = Color3.fromRGB(60, 255, 60)
 
-local BODY_PARTS = {
-	"Head", "UpperTorso", "LowerTorso", "HumanoidRootPart",
-	"LeftUpperArm", "LeftLowerArm", "LeftHand",
-	"RightUpperArm", "RightLowerArm", "RightHand",
-	"LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
-	"RightUpperLeg", "RightLowerLeg", "RightFoot",
-}
-
 local function getHealth(model)
 	local humanoid = model:FindFirstChildOfClass("Humanoid")
 	if humanoid then
@@ -120,41 +112,26 @@ function PlayerESP.Init(renderer)
 				continue
 			end
 
-			local bounds = nil
-			local minX, minY = math.huge, math.huge
-			local maxX, maxY = -math.huge, -math.huge
-			local count = 0
-
-			for _, partName in ipairs(BODY_PARTS) do
-				local part = model:FindFirstChild(partName)
-				if not part or not part:IsA("BasePart") then continue end
-
-				local s = part.Size
-				local cf = part.CFrame
-				local corners = {
-					cf * Vector3.new( s.X/2,  s.Y/2,  s.Z/2),
-					cf * Vector3.new(-s.X/2,  s.Y/2,  s.Z/2),
-					cf * Vector3.new( s.X/2, -s.Y/2,  s.Z/2),
-					cf * Vector3.new(-s.X/2, -s.Y/2,  s.Z/2),
-					cf * Vector3.new( s.X/2,  s.Y/2, -s.Z/2),
-					cf * Vector3.new(-s.X/2,  s.Y/2, -s.Z/2),
-					cf * Vector3.new( s.X/2, -s.Y/2, -s.Z/2),
-					cf * Vector3.new(-s.X/2, -s.Y/2, -s.Z/2),
-				}
-				for _, corner in ipairs(corners) do
-					local screenPos = workspace.CurrentCamera:WorldToViewportPoint(corner)
-					if screenPos.Z <= 0 then continue end
-					count += 1
-					if screenPos.X < minX then minX = screenPos.X end
-					if screenPos.Y < minY then minY = screenPos.Y end
-					if screenPos.X > maxX then maxX = screenPos.X end
-					if screenPos.Y > maxY then maxY = screenPos.Y end
-				end
+			local hrp = model:FindFirstChild("HumanoidRootPart")
+			if not hrp then
+				clearEntry(entry)
+				continue
 			end
 
-			if count > 0 then
-				bounds = { x = minX, y = minY, width = maxX - minX, height = maxY - minY }
+			local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
+			if not onScreen or screenPos.Z <= 0 then
+				clearEntry(entry)
+				continue
 			end
+
+			local h = workspace.CurrentCamera.ViewportSize.Y / screenPos.Z * 2
+			local w = h * 0.6
+			local bounds = {
+				x      = screenPos.X - w / 2,
+				y      = screenPos.Y - h / 2,
+				width  = w,
+				height = h,
+			}
 
 			if showBox then
 				Renderer.UpdateBox(entry.box, bounds, entry.color, 1)

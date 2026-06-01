@@ -116,8 +116,26 @@ function BotESP.Init(renderer)
 				continue
 			end
 
-			local ok, bounds = pcall(Renderer.GetBoundingBox, entity)
-			if not ok then bounds = nil end
+			local hrp = entity:FindFirstChild("HumanoidRootPart")
+			if not hrp then
+				clearEntry(entry)
+				continue
+			end
+
+			local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
+			if not onScreen or screenPos.Z <= 0 then
+				clearEntry(entry)
+				continue
+			end
+
+			local h = workspace.CurrentCamera.ViewportSize.Y / screenPos.Z * 2
+			local w = h * 0.6
+			local bounds = {
+				x      = screenPos.X - w / 2,
+				y      = screenPos.Y - h / 2,
+				width  = w,
+				height = h,
+			}
 
 			if showBox then
 				Renderer.UpdateBox(entry.box, bounds, BOT_COLOR, 1)
@@ -138,17 +156,12 @@ function BotESP.Init(renderer)
 				Renderer.UpdateLabel(entry.nameLabel, "", nil)
 			end
 
-			if showDist and bounds then
-				local hrp = entity:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local studs = Renderer.GetDistance(hrp.Position)
-					local distText = distUnit == "Meters"
-						and string.format("%.1fm", studs * 0.28)
-						or  string.format("%.0fstu", studs)
-					Renderer.UpdateLabel(entry.distLabel, distText, Vector2.new(bounds.x + bounds.width / 2, bounds.y + bounds.height + 4))
-				else
-					Renderer.UpdateLabel(entry.distLabel, "", nil)
-				end
+			if showDist then
+				local studs = Renderer.GetDistance(hrp.Position)
+				local distText = distUnit == "Meters"
+					and string.format("%.1fm", studs * 0.28)
+					or  string.format("%.0fstu", studs)
+				Renderer.UpdateLabel(entry.distLabel, distText, Vector2.new(bounds.x + bounds.width / 2, bounds.y + bounds.height + 4))
 			else
 				Renderer.UpdateLabel(entry.distLabel, "", nil)
 			end
