@@ -13,25 +13,30 @@ local friendlyHolder
 local ENEMY_COLOR    = Color3.fromRGB(255, 60, 60)
 local FRIENDLY_COLOR = Color3.fromRGB(60, 255, 60)
 
+local function findInFolder(folder, playerName)
+	if not folder then return nil end
+	local direct = folder:FindFirstChild(playerName)
+	if direct then return direct end
+	local holder = folder:FindFirstChild("HighlightHolder")
+	if holder then
+		return holder:FindFirstChild(playerName)
+	end
+	return nil
+end
+
 local function getTeam(playerName)
-	if enemyHolder and enemyHolder:FindFirstChild(playerName) then
+	if findInFolder(enemyHolder, playerName) then
 		return "enemy"
-	elseif friendlyHolder and friendlyHolder:FindFirstChild(playerName) then
+	elseif findInFolder(friendlyHolder, playerName) then
 		return "friendly"
 	end
 	return nil
 end
 
 local function getCharacter(playerName)
-	if enemyHolder then
-		local c = enemyHolder:FindFirstChild(playerName)
-		if c then return c end
-	end
-	if friendlyHolder then
-		local c = friendlyHolder:FindFirstChild(playerName)
-		if c then return c end
-	end
-	return nil
+	local c = findInFolder(enemyHolder, playerName)
+	if c then return c end
+	return findInFolder(friendlyHolder, playerName)
 end
 
 local function getHealth(character)
@@ -88,8 +93,8 @@ function PlayerESP.Init(renderer)
 	task.spawn(function()
 		local highlight = workspace:WaitForChild("Highlight", 30)
 		if not highlight then return end
-		enemyHolder    = highlight:WaitForChild("Enemy", 30) and highlight.Enemy:WaitForChild("HighlightHolder", 30)
-		friendlyHolder = highlight:WaitForChild("Friendly", 30) and highlight.Friendly:WaitForChild("HighlightHolder", 30)
+		enemyHolder    = highlight:WaitForChild("Enemy", 30)
+		friendlyHolder = highlight:WaitForChild("Friendly", 30)
 	end)
 
 	for _, player in ipairs(Players:GetPlayers()) do
