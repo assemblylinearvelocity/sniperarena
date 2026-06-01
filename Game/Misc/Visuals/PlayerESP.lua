@@ -142,13 +142,13 @@ function PlayerESP.Init(renderer)
 					cf * Vector3.new(-s.X/2, -s.Y/2, -s.Z/2),
 				}
 				for _, corner in ipairs(corners) do
-					local screen, _, depth = workspace.CurrentCamera:WorldToViewportPoint(corner)
-					if depth <= 0 then continue end
+					local screenPos = workspace.CurrentCamera:WorldToViewportPoint(corner)
+					if screenPos.Z <= 0 then continue end
 					count += 1
-					if screen.X < minX then minX = screen.X end
-					if screen.Y < minY then minY = screen.Y end
-					if screen.X > maxX then maxX = screen.X end
-					if screen.Y > maxY then maxY = screen.Y end
+					if screenPos.X < minX then minX = screenPos.X end
+					if screenPos.Y < minY then minY = screenPos.Y end
+					if screenPos.X > maxX then maxX = screenPos.X end
+					if screenPos.Y > maxY then maxY = screenPos.Y end
 				end
 			end
 

@@ -7,6 +7,12 @@ function Renderer.WorldToViewport(position)
 	return Vector2.new(screenPos.X, screenPos.Y), onScreen, screenPos.Z
 end
 
+-- internal use
+local function toScreen(position)
+	local screenPos, onScreen = camera:WorldToViewportPoint(position)
+	return screenPos.X, screenPos.Y, screenPos.Z
+end
+
 function Renderer.GetBoundingBox(character)
 	local minX, minY = math.huge, math.huge
 	local maxX, maxY = -math.huge, -math.huge
@@ -30,13 +36,13 @@ function Renderer.GetBoundingBox(character)
 		}
 
 		for _, corner in ipairs(corners) do
-			local screen, onScreen, depth = Renderer.WorldToViewport(corner)
-			if depth <= 0 then continue end
+			local screenPos, onScreen = camera:WorldToViewportPoint(corner)
+			if screenPos.Z <= 0 then continue end
 			onScreenCount += 1
-			if screen.X < minX then minX = screen.X end
-			if screen.Y < minY then minY = screen.Y end
-			if screen.X > maxX then maxX = screen.X end
-			if screen.Y > maxY then maxY = screen.Y end
+			if screenPos.X < minX then minX = screenPos.X end
+			if screenPos.Y < minY then minY = screenPos.Y end
+			if screenPos.X > maxX then maxX = screenPos.X end
+			if screenPos.Y > maxY then maxY = screenPos.Y end
 		end
 	end
 
