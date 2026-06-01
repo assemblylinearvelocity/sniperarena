@@ -12,20 +12,42 @@ local function isBot(instance)
 		and instance:FindFirstChild("Collider")
 end
 
+local function getHealth(entity)
+	local humanoid = entity:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		return humanoid.Health, humanoid.MaxHealth
+	end
+	local healthVal = entity:FindFirstChild("Health")
+	if healthVal then
+		return healthVal.Value, 100
+	end
+	return 100, 100
+end
+
 local function trackRoom(room)
 	local entities = room:FindFirstChild("Entities")
 	if not entities then return end
 
 	for _, entity in ipairs(entities:GetChildren()) do
 		if isBot(entity) and not tracked[entity] then
-			tracked[entity] = { box = Renderer.NewBox() }
+			tracked[entity] = {
+				box       = Renderer.NewBox(),
+				healthBar = Renderer.NewHealthBar(),
+				nameLabel = Renderer.NewLabel(),
+				distLabel = Renderer.NewLabel(),
+			}
 		end
 	end
 
 	entities.ChildAdded:Connect(function(entity)
 		task.wait()
 		if isBot(entity) and not tracked[entity] then
-			tracked[entity] = { box = Renderer.NewBox() }
+			tracked[entity] = {
+				box       = Renderer.NewBox(),
+				healthBar = Renderer.NewHealthBar(),
+				nameLabel = Renderer.NewLabel(),
+				distLabel = Renderer.NewLabel(),
+			}
 		end
 	end)
 
@@ -33,6 +55,9 @@ local function trackRoom(room)
 		local entry = tracked[entity]
 		if entry then
 			Renderer.RemoveBox(entry.box)
+			Renderer.RemoveHealthBar(entry.healthBar)
+			Renderer.RemoveLabel(entry.nameLabel)
+			Renderer.RemoveLabel(entry.distLabel)
 			tracked[entity] = nil
 		end
 	end)
@@ -54,16 +79,62 @@ function BotESP.Init(renderer)
 
 	RunService.RenderStepped:Connect(function()
 		local Toggles = getgenv().Toggles
-		local espEnabled = Toggles and Toggles["BotESP_Enabled"] and Toggles["BotESP_Enabled"].Value
+		local Options  = getgenv().Options
+
+		local espEnabled = Toggles and Toggles["BotESP_Enabled"]   and Toggles["BotESP_Enabled"].Value
+		local showBox    = Toggles and Toggles["BotESP_Box"]        and Toggles["BotESP_Box"].Value
+		local showHealth = Toggles and Toggles["BotESP_Health"]     and Toggles["BotESP_Health"].Value
+		local showName   = Toggles and Toggles["BotESP_Name"]       and Toggles["BotESP_Name"].Value
+		local showDist   = Toggles and Toggles["BotESP_Distance"]   and Toggles["BotESP_Distance"].Value
+		local distUnit   = Options  and Options["BotESP_DistUnit"]  and Options["BotESP_DistUnit"].Value
 
 		for entity, entry in pairs(tracked) do
 			if not espEnabled or not entity.Parent then
 				Renderer.UpdateBox(entry.box, nil, nil)
+				Renderer.UpdateHealthBar(entry.healthBar, nil, 0, 100)
+				Renderer.UpdateLabel(entry.nameLabel, "", nil)
+				Renderer.UpdateLabel(entry.distLabel, "", nil)
 				continue
 			end
 
 			local bounds = Renderer.GetBoundingBox(entity)
-			Renderer.UpdateBox(entry.box, bounds, BOT_COLOR, 1)
+
+			if showBox then
+				Renderer.UpdateBox(entry.box, bounds, BOT_COLOR, 1)
+			else
+				Renderer.UpdateBox(entry.box, nil, nil)
+			end
+
+			if showHealth then
+				local hp, maxHp = getHealth(entity)
+				Renderer.UpdateHealthBar(entry.healthBar, bounds, hp, maxHp)
+			else
+				Renderer.UpdateHealthBar(entry.healthBar, nil, 0, 100)
+			end
+
+			if showName and bounds then
+				Renderer.UpdateLabel(entry.nameLabel, entity.Name, Vector2.new(bounds.x + bounds.width / 2, bounds.y - 16))
+			else
+				Renderer.UpdateLabel(entry.nameLabel, "", nil)
+			end
+
+			if showDist and bounds then
+				local hrp = entity:FindFirstChild("HumanoidRootPart")
+				if hrp then
+					local studs = Renderer.GetDistance(hrp.Position)
+					local distText
+					if distUnit == "Meters" then
+						distText = string.format("%.1fm", studs * 0.28)
+					else
+						distText = string.format("%.0fstu", studs)
+					end
+					Renderer.UpdateLabel(entry.distLabel, distText, Vector2.new(bounds.x + bounds.width / 2, bounds.y + bounds.height + 4))
+				else
+					Renderer.UpdateLabel(entry.distLabel, "", nil)
+				end
+			else
+				Renderer.UpdateLabel(entry.distLabel, "", nil)
+			end
 		end
 	end)
 end
@@ -71,6 +142,9 @@ end
 function BotESP.Unload()
 	for _, entry in pairs(tracked) do
 		Renderer.RemoveBox(entry.box)
+		Renderer.RemoveHealthBar(entry.healthBar)
+		Renderer.RemoveLabel(entry.nameLabel)
+		Renderer.RemoveLabel(entry.distLabel)
 	end
 	tracked = {}
 end
