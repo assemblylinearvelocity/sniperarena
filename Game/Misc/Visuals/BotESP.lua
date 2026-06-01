@@ -6,12 +6,10 @@ local BotESP = {}
 local tracked = {}
 local BOT_COLOR = Color3.fromRGB(255, 165, 0)
 
-local Options = getgenv().Options
-
-local worldFolder = workspace:WaitForChild("World")
-
 local function isBot(instance)
-	return instance:FindFirstChild("Humanoid") and instance:FindFirstChild("HumanoidRootPart") and instance:FindFirstChild("Collider")
+	return instance:FindFirstChild("Humanoid")
+		and instance:FindFirstChild("HumanoidRootPart")
+		and instance:FindFirstChild("Collider")
 end
 
 local function trackRoom(room)
@@ -25,6 +23,7 @@ local function trackRoom(room)
 	end
 
 	entities.ChildAdded:Connect(function(entity)
+		task.wait()
 		if isBot(entity) and not tracked[entity] then
 			tracked[entity] = { box = Renderer.NewBox() }
 		end
@@ -42,6 +41,8 @@ end
 function BotESP.Init(renderer)
 	Renderer = renderer
 
+	local worldFolder = workspace:WaitForChild("World")
+
 	for _, room in ipairs(worldFolder:GetChildren()) do
 		trackRoom(room)
 	end
@@ -52,16 +53,11 @@ function BotESP.Init(renderer)
 	end)
 
 	RunService.RenderStepped:Connect(function()
-		local espEnabled = Options and Options["BotESP_Enabled"] and Options["BotESP_Enabled"].Value
+		local Toggles = getgenv().Toggles
+		local espEnabled = Toggles and Toggles["BotESP_Enabled"] and Toggles["BotESP_Enabled"].Value
 
 		for entity, entry in pairs(tracked) do
 			if not espEnabled or not entity.Parent then
-				Renderer.UpdateBox(entry.box, nil, nil)
-				continue
-			end
-
-			local hrp = entity:FindFirstChild("HumanoidRootPart")
-			if not hrp then
 				Renderer.UpdateBox(entry.box, nil, nil)
 				continue
 			end
@@ -73,7 +69,7 @@ function BotESP.Init(renderer)
 end
 
 function BotESP.Unload()
-	for entity, entry in pairs(tracked) do
+	for _, entry in pairs(tracked) do
 		Renderer.RemoveBox(entry.box)
 	end
 	tracked = {}

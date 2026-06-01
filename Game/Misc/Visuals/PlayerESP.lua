@@ -3,18 +3,15 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local PlayerESP = {}
-PlayerESP.__index = PlayerESP
 
 local localPlayer = Players.LocalPlayer
 local tracked = {}
 
-local enemyHolder   = workspace:WaitForChild("Highlight"):WaitForChild("Enemy"):WaitForChild("HighlightHolder")
-local friendlyHolder = workspace:WaitForChild("Highlight"):WaitForChild("Friendly"):WaitForChild("HighlightHolder")
+local enemyHolder
+local friendlyHolder
 
-local ENEMY_COLOR   = Color3.fromRGB(255, 60, 60)
+local ENEMY_COLOR    = Color3.fromRGB(255, 60, 60)
 local FRIENDLY_COLOR = Color3.fromRGB(60, 255, 60)
-
-local Options = getgenv().Options
 
 local function getTeam(playerName)
 	if enemyHolder:FindFirstChild(playerName) then
@@ -28,20 +25,13 @@ end
 local function getCharacter(playerName)
 	local inEnemy = enemyHolder:FindFirstChild(playerName)
 	if inEnemy then return inEnemy end
-	local inFriendly = friendlyHolder:FindFirstChild(playerName)
-	if inFriendly then return inFriendly end
-	return nil
+	return friendlyHolder:FindFirstChild(playerName)
 end
 
 local function addPlayer(player)
 	if player == localPlayer then return end
 	if tracked[player] then return end
-
-	local entry = {
-		player = player,
-		box = Renderer.NewBox(),
-	}
-	tracked[player] = entry
+	tracked[player] = { box = Renderer.NewBox() }
 end
 
 local function removePlayer(player)
@@ -54,6 +44,9 @@ end
 function PlayerESP.Init(renderer)
 	Renderer = renderer
 
+	enemyHolder   = workspace:WaitForChild("Highlight"):WaitForChild("Enemy"):WaitForChild("HighlightHolder")
+	friendlyHolder = workspace:WaitForChild("Highlight"):WaitForChild("Friendly"):WaitForChild("HighlightHolder")
+
 	for _, player in ipairs(Players:GetPlayers()) do
 		addPlayer(player)
 	end
@@ -62,8 +55,9 @@ function PlayerESP.Init(renderer)
 	Players.PlayerRemoving:Connect(removePlayer)
 
 	RunService.RenderStepped:Connect(function()
-		local espEnabled = Options and Options["PlayerESP_Enabled"] and Options["PlayerESP_Enabled"].Value
-		local teamCheck  = Options and Options["PlayerESP_TeamCheck"] and Options["PlayerESP_TeamCheck"].Value
+		local Toggles = getgenv().Toggles
+		local espEnabled = Toggles and Toggles["PlayerESP_Enabled"] and Toggles["PlayerESP_Enabled"].Value
+		local teamCheck  = Toggles and Toggles["PlayerESP_TeamCheck"] and Toggles["PlayerESP_TeamCheck"].Value
 
 		for player, entry in pairs(tracked) do
 			if not espEnabled then
@@ -96,7 +90,7 @@ function PlayerESP.Init(renderer)
 end
 
 function PlayerESP.Unload()
-	for player, entry in pairs(tracked) do
+	for _, entry in pairs(tracked) do
 		Renderer.RemoveBox(entry.box)
 	end
 	tracked = {}

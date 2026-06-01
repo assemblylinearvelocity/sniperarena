@@ -12,11 +12,8 @@ end
 
 local Renderer = load("Game/Misc/Visuals/Renderer.lua")
 
-getgenv().Toggles = {}
-getgenv().Options = {}
-
-local Library     = load("ObsidianLib/Library.lua")
-local SaveManager = load("ObsidianLib/addons/SaveManager.lua")
+local Library      = load("ObsidianLib/Library.lua")
+local SaveManager  = load("ObsidianLib/addons/SaveManager.lua")
 local ThemeManager = load("ObsidianLib/addons/ThemeManager.lua")
 
 local Window = Library:CreateWindow({
@@ -26,14 +23,14 @@ local Window = Library:CreateWindow({
 	AutoShow = true,
 })
 
-local Toggles = getgenv().Toggles
-local Options = getgenv().Options
+getgenv().Toggles = Library.Toggles
+getgenv().Options = Library.Options
 
-load("Menu/Visuals.lua")(Window, Toggles, Options)
-load("Menu/Legit.lua")(Window, Toggles, Options)
-load("Menu/Rage.lua")(Window, Toggles, Options)
-load("Menu/Exploits.lua")(Window, Toggles, Options)
-load("Menu/Settings.lua")(Window, Toggles, Options, SaveManager, ThemeManager)
+load("Menu/Visuals.lua")(Window, Library.Toggles, Library.Options)
+load("Menu/Legit.lua")(Window, Library.Toggles, Library.Options)
+load("Menu/Rage.lua")(Window, Library.Toggles, Library.Options)
+load("Menu/Exploits.lua")(Window, Library.Toggles, Library.Options)
+load("Menu/Settings.lua")(Window, Library.Toggles, Library.Options, SaveManager, ThemeManager)
 
 local PlayerESP = load("Game/Misc/Visuals/PlayerESP.lua")
 local BotESP    = load("Game/Misc/Visuals/BotESP.lua")
