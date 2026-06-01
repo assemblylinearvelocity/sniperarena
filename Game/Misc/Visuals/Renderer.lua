@@ -12,17 +12,8 @@ function Renderer.GetBoundingBox(character)
 	local maxX, maxY = -math.huge, -math.huge
 	local onScreenCount = 0
 
-	local parts = {
-		"Head", "UpperTorso", "LowerTorso", "HumanoidRootPart",
-		"LeftUpperArm", "LeftLowerArm", "LeftHand",
-		"RightUpperArm", "RightLowerArm", "RightHand",
-		"LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
-		"RightUpperLeg", "RightLowerLeg", "RightFoot",
-	}
-
-	for _, partName in ipairs(parts) do
-		local part = character:FindFirstChild(partName)
-		if not part then continue end
+	for _, part in ipairs(character:GetDescendants()) do
+		if not part:IsA("BasePart") then continue end
 
 		local size = part.Size
 		local cf = part.CFrame
